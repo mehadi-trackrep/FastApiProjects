@@ -1,3 +1,5 @@
+import json
+import requests
 from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -8,6 +10,9 @@ class Item(BaseModel):
     price: float
     currency: str
     tax: Optional[float] = None
+
+async def fetch_coin_desc():
+    return requests.get("https://api.coindesk.com/v1/bpi/currentprice.json").text
 
 app = FastAPI()
 
@@ -25,5 +30,8 @@ async def create_item(item: Item):
 
 @app.put("/items/{item_id}")
 async def create_item(item_id: int, item: Item):
-    return {"item_id": item_id, **dict(item)}
+    coin_desc = await fetch_coin_desc()
+    item_dict = dict(item)
+    item_dict.update({"coin_desc": json.loads(coin_desc)})
+    return {"item_id": item_id, **item_dict}
 
